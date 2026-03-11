@@ -9,21 +9,24 @@ import { Badge } from "@/components/ui/badge";
 import { GeneratorForm } from "@/components/generator-form";
 import { GeneratorOutput } from "@/components/generator-output";
 
-const validTypes = ["landing", "ad", "faq", "dm"];
+// evidence must be first for UX — it's the "insight layer" before docs
+const validTypes = ["evidence", "landing", "ad", "faq", "dm"];
 const INITIAL_REVIEWS = ["", "", "", "", ""];
 
 function AppContent() {
   const searchParams = useSearchParams();
   const typeParam = searchParams.get("type");
-  const initialTab = validTypes.includes(typeParam || "") ? typeParam! : "landing";
+  const initialTab = validTypes.includes(typeParam || "") ? typeParam! : "evidence";
 
   const [productName, setProductName] = useState("");
   const [targetCustomer, setTargetCustomer] = useState("");
   const [tone, setTone] = useState<"friendly" | "trustworthy" | "premium">("friendly");
   const [bannedWords, setBannedWords] = useState("");
+  const [evidenceStrength, setEvidenceStrength] = useState<"conservative" | "balanced" | "aggressive">("conservative");
   const [reviews, setReviews] = useState<string[]>(INITIAL_REVIEWS);
-  
+
   const [outputs, setOutputs] = useState<Record<string, string>>({
+    evidence: "",
     landing: "",
     ad: "",
     faq: "",
@@ -61,6 +64,7 @@ function AppContent() {
           targetCustomer,
           tone,
           bannedWords,
+          evidenceStrength,
         }),
       });
 
@@ -85,8 +89,9 @@ function AppContent() {
     }
   };
 
+  // Evidence Map first, then the rest
   const handleGenerateAll = async () => {
-    const types = ["landing", "ad", "faq", "dm"];
+    const types = ["evidence", "landing", "ad", "faq", "dm"];
     for (const type of types) {
       await handleGenerate(type);
     }
@@ -98,8 +103,8 @@ function AppContent() {
       <header className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -113,9 +118,9 @@ function AppContent() {
               <span className="font-bold text-foreground">리뷰투카피</span>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 sm:gap-3">
-            <Badge 
+            <Badge
               variant={reviewCount >= 3 ? "default" : "secondary"}
               className="rounded-full text-xs"
             >
@@ -149,6 +154,8 @@ function AppContent() {
               setTone={setTone}
               bannedWords={bannedWords}
               setBannedWords={setBannedWords}
+              evidenceStrength={evidenceStrength}
+              setEvidenceStrength={setEvidenceStrength}
               reviews={reviews}
               setReviews={setReviews}
               onGenerate={handleGenerate}

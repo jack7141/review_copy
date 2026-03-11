@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, MessageSquare, HelpCircle, Send, Heart, Shield, Crown, Plus, X } from "lucide-react";
+import { FileText, MessageSquare, HelpCircle, Send, Heart, Shield, Crown, Plus, X, Search, Scale, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 
 const documentTypes = [
+  { id: "evidence", label: "증거 지도", icon: Search },
   { id: "landing", label: "랜딩페이지", icon: FileText },
   { id: "ad", label: "광고 카피", icon: MessageSquare },
   { id: "faq", label: "FAQ", icon: HelpCircle },
@@ -22,6 +23,30 @@ const tones = [
   { id: "premium", label: "프리미엄", icon: Crown, desc: "고급스럽고 세련된 톤" },
 ] as const;
 
+const strengthOptions = [
+  {
+    id: "conservative",
+    label: "보수적",
+    icon: Shield,
+    desc: "후기 원문만",
+    detail: "후기에 있는 표현·사실만 사용. 추론 없음.",
+  },
+  {
+    id: "balanced",
+    label: "균형",
+    icon: Scale,
+    desc: "원문 기반 추론",
+    detail: "원문 기반 + 자연스러운 유추 허용.",
+  },
+  {
+    id: "aggressive",
+    label: "공격적",
+    icon: Zap,
+    desc: "추론 허용",
+    detail: "방향성 기반 적극적 추론 허용.",
+  },
+] as const;
+
 interface GeneratorFormProps {
   productName: string;
   setProductName: (value: string) => void;
@@ -31,6 +56,8 @@ interface GeneratorFormProps {
   setTone: (value: "friendly" | "trustworthy" | "premium") => void;
   bannedWords: string;
   setBannedWords: (value: string) => void;
+  evidenceStrength: "conservative" | "balanced" | "aggressive";
+  setEvidenceStrength: (value: "conservative" | "balanced" | "aggressive") => void;
   reviews: string[];
   setReviews: (value: string[]) => void;
   onGenerate: (type: string) => void;
@@ -47,6 +74,8 @@ export function GeneratorForm({
   setTone,
   bannedWords,
   setBannedWords,
+  evidenceStrength,
+  setEvidenceStrength,
   reviews,
   setReviews,
   onGenerate,
@@ -111,16 +140,42 @@ export function GeneratorForm({
               <button
                 key={t.id}
                 onClick={() => setTone(t.id)}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
-                  tone === t.id
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${tone === t.id
                     ? "border-accent bg-accent/5"
                     : "border-border hover:border-muted-foreground/30"
-                }`}
+                  }`}
               >
                 <t.icon className={`w-4 h-4 ${tone === t.id ? "text-accent" : "text-muted-foreground"}`} />
                 <span className={`text-xs font-medium ${tone === t.id ? "text-foreground" : "text-muted-foreground"}`}>
                   {t.label}
                 </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Evidence Strength */}
+        <div className="space-y-2">
+          <Label>
+            증거 추출 강도{" "}
+            <span className="text-muted-foreground font-normal text-xs">— 기본: 보수적(권장)</span>
+          </Label>
+          <div className="grid grid-cols-3 gap-2">
+            {strengthOptions.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setEvidenceStrength(s.id)}
+                title={s.detail}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${evidenceStrength === s.id
+                    ? "border-chart-2 bg-chart-2/5"
+                    : "border-border hover:border-muted-foreground/30"
+                  }`}
+              >
+                <s.icon className={`w-4 h-4 ${evidenceStrength === s.id ? "text-chart-2" : "text-muted-foreground"}`} />
+                <span className={`text-xs font-medium ${evidenceStrength === s.id ? "text-foreground" : "text-muted-foreground"}`}>
+                  {s.label}
+                </span>
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">{s.desc}</span>
               </button>
             ))}
           </div>
@@ -143,7 +198,7 @@ export function GeneratorForm({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label>고객 후기</Label>
-            <Badge 
+            <Badge
               variant={validReviewCount >= 3 ? "default" : "secondary"}
               className={`rounded-full ${validReviewCount >= 3 ? "bg-accent text-accent-foreground" : ""}`}
             >
@@ -215,11 +270,11 @@ export function GeneratorForm({
             {documentTypes.map((type) => (
               <Button
                 key={type.id}
-                variant="outline"
+                variant={type.id === "evidence" ? "default" : "outline"}
                 size="sm"
                 onClick={() => onGenerate(type.id)}
                 disabled={isGenerating || validReviewCount < 3}
-                className="justify-start rounded-lg"
+                className={`justify-start rounded-lg ${type.id === "evidence" ? "col-span-2" : ""}`}
               >
                 {isGenerating && generatingType === type.id ? (
                   <Spinner className="w-4 h-4 mr-2" />
@@ -227,6 +282,9 @@ export function GeneratorForm({
                   <type.icon className="w-4 h-4 mr-2" />
                 )}
                 {type.label}
+                {type.id === "evidence" && (
+                  <span className="ml-auto text-xs opacity-70">먼저 생성 권장</span>
+                )}
               </Button>
             ))}
           </div>
